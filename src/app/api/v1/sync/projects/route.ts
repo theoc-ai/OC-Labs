@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 
 const SYNC_SECRET = process.env.OMNIA_HUB_SYNC_SECRET
 
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const supabase = await createServerSupabaseClient()
+  const supabase = supabaseAdmin
 
   const { data, error } = await supabase
     .from('projects')
