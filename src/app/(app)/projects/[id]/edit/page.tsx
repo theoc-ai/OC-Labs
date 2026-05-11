@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { canEditProjectSettings } from '@/lib/auth/permissions'
+import { canEditProjectSettings, getPlatformRole, isPowerUser as checkPowerUser } from '@/lib/auth/permissions'
 import { ProjectForm } from '@/components/projects/ProjectForm'
 
 interface PageProps {
@@ -14,9 +14,10 @@ export default async function EditProjectPage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: project }, allowed] = await Promise.all([
+  const [{ data: project }, allowed, platformRole] = await Promise.all([
     supabase.from('projects').select('*').eq('id', id).single(),
     canEditProjectSettings(supabase, user.id, id),
+    getPlatformRole(supabase, user.id),
   ])
 
   if (!project) notFound()
@@ -28,7 +29,7 @@ export default async function EditProjectPage({ params }: PageProps) {
         <h1 className="font-heading text-2xl font-bold text-zinc-900 dark:text-zinc-50">Edit project</h1>
         <p className="mt-1 text-sm text-zinc-500">{project.title}</p>
       </div>
-      <ProjectForm mode="edit" projectId={id} initial={project} />
+      <ProjectForm mode="edit" projectId={id} initial={project} isPowerUser={checkPowerUser(platformRole)} />
     </div>
   )
 }

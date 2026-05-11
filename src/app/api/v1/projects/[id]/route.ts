@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { canEditProjectSettings, canDeleteProject } from '@/lib/auth/permissions'
-import { notifyHubSync } from '@/lib/hub-sync'
+import { notifyHubSync, notifyHubWebhook } from '@/lib/hub-sync'
 import type { ProjectStatus } from '@/types'
 
 const VALID_STATUSES: ProjectStatus[] = ['Idea', 'In progress', 'Needs help', 'Paused', 'Shipped']
@@ -42,8 +42,11 @@ export async function PUT(
   if (Array.isArray(body.skills_needed)) updates.skills_needed = body.skills_needed
   if (Array.isArray(body.github_repos)) updates.github_repos = body.github_repos
   if (typeof body.notion_url === 'string') updates.notion_url = body.notion_url
-  if (typeof body.hub_stream === 'string') updates.hub_stream = body.hub_stream
-  if (typeof body.hub_category === 'string') updates.hub_category = body.hub_category || null
+  if (typeof body.stream === 'string') updates.stream = body.stream
+  if (typeof body.category === 'string') updates.category = body.category || null
+  if (typeof body.priority === 'string') updates.priority = body.priority
+  if (Array.isArray(body.contributing_opcos)) updates.contributing_opcos = body.contributing_opcos
+  if (Array.isArray(body.tags)) updates.tags = body.tags
 
   const { data: project, error } = await supabase
     .from('projects')
@@ -56,7 +59,7 @@ export async function PUT(
     return NextResponse.json({ error: error?.message ?? 'Update failed' }, { status: 500 })
   }
 
-  notifyHubSync()
+  notifyHubWebhook(project as Record<string, unknown>)
   return NextResponse.json(project)
 }
 
