@@ -20,7 +20,7 @@ export async function notifyProjectUpdate(projectTitle: string, message: string)
   })
 }
 
-export async function notifyNeedsHelp(projectTitle: string, ownerName: string, skills: string[]): Promise<void> {
+export async function notifyRecruiting(projectTitle: string, ownerName: string, skills: string[]): Promise<void> {
   const webhookUrl = process.env.SLACK_WEBHOOK_PROJECTS
   if (!webhookUrl) return
 
@@ -30,7 +30,7 @@ export async function notifyNeedsHelp(projectTitle: string, ownerName: string, s
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `🙋 *${projectTitle}* needs help!\n*Owner:* ${ownerName}\n*Skills needed:* ${skills.join(', ')}`,
+          text: `📣 *${projectTitle}* is recruiting!\n*Owner:* ${ownerName}\n*Skills needed:* ${skills.join(', ')}`,
         },
       },
     ],

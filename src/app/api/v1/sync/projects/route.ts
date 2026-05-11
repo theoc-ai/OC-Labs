@@ -33,7 +33,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         email
       )
     `)
-    .in('status', ['In progress', 'Needs help'])
+    .in('status', ['In Flight'])
     .eq('submission_status', 'approved')
     .order('created_at', { ascending: false })
 

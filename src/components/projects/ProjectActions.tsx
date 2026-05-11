@@ -10,7 +10,9 @@ interface ProjectActionsProps {
   initialHasVoted: boolean
   initialHasRaisedHand: boolean
   initialMembershipRole: MemberRole | null
+  initialIsRecruiting: boolean
   isOwner: boolean
+  canRecruit: boolean
 }
 
 export function ProjectActions({
@@ -19,12 +21,16 @@ export function ProjectActions({
   initialHasVoted,
   initialHasRaisedHand,
   initialMembershipRole,
+  initialIsRecruiting,
   isOwner,
+  canRecruit,
 }: ProjectActionsProps) {
   const [voteCount, setVoteCount] = useState(initialVoteCount)
   const [hasVoted, setHasVoted] = useState(initialHasVoted)
   const [hasRaisedHand, setHasRaisedHand] = useState(initialHasRaisedHand)
   const [membershipRole, setMembershipRole] = useState<MemberRole | null>(initialMembershipRole)
+  const [isRecruiting, setIsRecruiting] = useState(initialIsRecruiting)
+  const [recruitPending, setRecruitPending] = useState(false)
   const [votePending, setVotePending] = useState(false)
   const [joinPending, setJoinPending] = useState(false)
   const isApprovedMember = membershipRole !== null && membershipRole !== 'interested'
@@ -86,6 +92,26 @@ export function ProjectActions({
     }
   }
 
+  async function handleToggleRecruiting() {
+    if (recruitPending) return
+    const prev = isRecruiting
+    setIsRecruiting(!prev)
+    setRecruitPending(true)
+    try {
+      const res = await fetch(`/api/v1/projects/${projectId}/needs-help`, { method: 'POST' })
+      if (res.ok) {
+        const data = await res.json()
+        setIsRecruiting(data.isRecruiting)
+      } else {
+        setIsRecruiting(prev)
+      }
+    } catch {
+      setIsRecruiting(prev)
+    } finally {
+      setRecruitPending(false)
+    }
+  }
+
   async function handleWithdrawHand() {
     if (joinPending || !hasRaisedHand) return
 
@@ -107,6 +133,20 @@ export function ProjectActions({
 
   return (
     <div className="flex gap-3">
+      {canRecruit && (
+        <button
+          onClick={handleToggleRecruiting}
+          disabled={recruitPending}
+          className={cn(
+            'rounded-lg px-4 py-2 text-sm font-medium transition-colors',
+            isRecruiting
+              ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+              : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+          )}
+        >
+          {recruitPending ? 'Saving…' : isRecruiting ? 'Recruiting ✓' : 'Mark as Recruiting'}
+        </button>
+      )}
       <button
         onClick={handleVote}
         disabled={votePending}

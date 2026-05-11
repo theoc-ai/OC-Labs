@@ -55,7 +55,9 @@ export default async function ProjectLayout({ children, params }: LayoutProps) {
         initialHasVoted={hasVoted}
         initialHasRaisedHand={hasRaisedHand}
         initialMembershipRole={membershipRole}
+        initialIsRecruiting={!!(project as Record<string, unknown>).is_recruiting}
         isOwner={canManageProject}
+        canRecruit={canManageProject || membershipRole === 'tech_lead'}
       />
 
       <ProjectTabs projectId={id} canViewHandRaises={canViewHandRaises} />

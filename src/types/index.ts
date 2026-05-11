@@ -1,6 +1,6 @@
 // src/types/index.ts
 
-export type ProjectStatus = 'Idea' | 'In progress' | 'Needs help' | 'Paused' | 'Shipped'
+export type ProjectStatus = 'Idea' | 'In Flight' | 'On Hold' | 'Complete'
 export type ProjectSubmissionStatus = 'pending_review' | 'approved' | 'rejected'
 export type MemberRole = 'owner' | 'contributor' | 'interested' | 'observer' | 'tech_lead'
 export type PlatformRole = 'user' | 'power_user'
@@ -54,7 +54,7 @@ export interface Project {
   owner_id?: string
   github_repos: string[]
   skills_needed: string[]
-  needs_help: boolean
+  is_recruiting: boolean
   vote_count: number
   notion_url?: string
   jira_epic_key?: string
@@ -168,7 +168,7 @@ export interface ProjectCardProps {
   hasRaisedHand: boolean
   joinPending?: boolean
   joinError?: string | null
-  needsHelp: boolean
+  isRecruiting: boolean
   onVote: () => void
   onJoin: () => void
   onClick: () => void

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Project, ProjectStatus } from '@/types'
 
-const ALL_STATUSES: ProjectStatus[] = ['Idea', 'In progress', 'Needs help', 'Paused', 'Shipped']
+const ALL_STATUSES: ProjectStatus[] = ['Idea', 'In Flight', 'On Hold', 'Complete']
 
 const HUB_STREAMS = [
   { value: 'internal_rnd',         label: 'Internal R&D' },

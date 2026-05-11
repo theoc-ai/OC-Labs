@@ -17,7 +17,7 @@ const POWER_USER_SYSTEM_PROMPT = `You are the OC Labs new-project assistant. You
 Collect these details through natural conversation:
 - **Title** (required): The project name
 - **Summary**: What the project is and why it matters
-- **Status**: Idea / In progress / Needs help / Paused / Shipped (default: Idea)
+- **Status**: Idea / In Flight / On Hold / Complete (default: Idea)
 - **Skills needed**: Tags such as frontend, backend/integrations, AI/LLM, data/analytics, product/design, governance/workflow
 - **GitHub repos**: Repository URLs (optional)
 - **Notion URL**: Workspace or doc link (optional)
@@ -53,7 +53,7 @@ GUARDRAILS — when these topics come up, respond with the exact guidance below 
 
 Keep responses warm and concise. This is the user's first step — make it easy.`
 
-const VALID_STATUSES: ProjectStatus[] = ['Idea', 'In progress', 'Needs help', 'Paused', 'Shipped']
+const VALID_STATUSES: ProjectStatus[] = ['Idea', 'In Flight', 'On Hold', 'Complete']
 
 const CREATE_PROJECT_TOOL: Anthropic.Tool = {
   name: 'create_project',
@@ -66,7 +66,7 @@ const CREATE_PROJECT_TOOL: Anthropic.Tool = {
       summary: { type: 'string', description: 'Brief description of the project' },
       status: {
         type: 'string',
-        enum: ['Idea', 'In progress', 'Needs help', 'Paused', 'Shipped'],
+        enum: ['Idea', 'In Flight', 'On Hold', 'Complete'],
         description: 'Current project status',
       },
       skills_needed: {
@@ -119,7 +119,7 @@ async function createProject(
       skills_needed: Array.isArray(input.skills_needed) ? input.skills_needed : [],
       github_repos: Array.isArray(input.github_repos) ? input.github_repos : [],
       notion_url: typeof input.notion_url === 'string' ? input.notion_url : null,
-      needs_help: false,
+      is_recruiting: false,
       vote_count: 0,
     })
     .select()

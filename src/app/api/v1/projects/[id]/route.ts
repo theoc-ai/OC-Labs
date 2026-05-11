@@ -4,7 +4,7 @@ import { canEditProjectSettings, canDeleteProject } from '@/lib/auth/permissions
 import { notifyHubSync, notifyHubWebhook } from '@/lib/hub-sync'
 import type { ProjectStatus } from '@/types'
 
-const VALID_STATUSES: ProjectStatus[] = ['Idea', 'In progress', 'Needs help', 'Paused', 'Shipped']
+const VALID_STATUSES: ProjectStatus[] = ['Idea', 'In Flight', 'On Hold', 'Complete']
 
 export async function PUT(
   req: NextRequest,

@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils/cn'
 import type { ProjectStatus } from '@/types'
 
-const ALL_STATUSES: ProjectStatus[] = ['Idea', 'In progress', 'Needs help', 'Paused', 'Shipped']
+const ALL_STATUSES: ProjectStatus[] = ['Idea', 'In Flight', 'On Hold', 'Complete']
 
 interface FilterChipsProps {
   selected: ProjectStatus | null

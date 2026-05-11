@@ -1,16 +1,17 @@
 import { cn } from '@/lib/utils/cn'
 import type { Project, ProjectStatus } from '@/types'
 
+type ProjectWithRecruiting = Project & { is_recruiting?: boolean }
+
 const STATUS_STYLES: Record<ProjectStatus, string> = {
   'Idea': 'bg-blue-100 text-blue-700',
-  'In progress': 'bg-amber-100 text-amber-700',
-  'Needs help': 'bg-red-100 text-red-700',
-  'Paused': 'bg-zinc-100 text-zinc-500',
-  'Shipped': 'bg-green-100 text-green-700',
+  'In Flight': 'bg-amber-100 text-amber-700',
+  'On Hold': 'bg-zinc-100 text-zinc-500',
+  'Complete': 'bg-green-100 text-green-700',
 }
 
 interface ProjectHeaderProps {
-  project: Project
+  project: ProjectWithRecruiting
   isOwner: boolean
 }
 
@@ -28,6 +29,11 @@ export function ProjectHeader({ project, isOwner }: ProjectHeaderProps) {
             >
               {project.status}
             </span>
+            {project.is_recruiting && (
+              <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-700">
+                Recruiting
+              </span>
+            )}
             {project.brand && (
               <span className="text-sm text-zinc-500">{project.brand}</span>
             )}

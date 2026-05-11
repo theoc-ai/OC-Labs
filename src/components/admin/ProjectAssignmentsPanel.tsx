@@ -18,10 +18,9 @@ interface Props {
 
 const STATUS_TO_VARIANT: Record<ProjectStatus, 'blue' | 'amber' | 'red' | 'default' | 'green'> = {
   Idea: 'blue',
-  'In progress': 'amber',
-  'Needs help': 'red',
-  Paused: 'default',
-  Shipped: 'green',
+  'In Flight': 'amber',
+  'On Hold': 'default',
+  Complete: 'green',
 }
 
 function statusVariant(status: string | null): 'blue' | 'amber' | 'red' | 'default' | 'green' {

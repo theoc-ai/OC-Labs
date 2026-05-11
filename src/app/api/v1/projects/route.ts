@@ -7,7 +7,7 @@ import { canCreateProject, getPlatformRole, isPowerUser } from '@/lib/auth/permi
 import { notifyHubSync } from '@/lib/hub-sync'
 import type { ProjectStatus } from '@/types'
 
-const VALID_STATUSES: ProjectStatus[] = ['Idea', 'In progress', 'Needs help', 'Paused', 'Shipped']
+const VALID_STATUSES: ProjectStatus[] = ['Idea', 'In Flight', 'On Hold', 'Complete']
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const supabase = await createServerSupabaseClient()
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       skills_needed: Array.isArray(body.skills_needed) ? body.skills_needed : [],
       github_repos: Array.isArray(body.github_repos) ? body.github_repos : [],
       notion_url: typeof body.notion_url === 'string' ? body.notion_url : null,
-      needs_help: false,
+      is_recruiting: false,
       vote_count: 0,
     })
     .select()

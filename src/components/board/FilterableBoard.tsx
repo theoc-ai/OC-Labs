@@ -137,7 +137,7 @@ export function FilterableBoard({
               hasRaisedHand={requestedProjectIds.includes(project.id) || !!localRequestedByProject[project.id]}
               joinPending={!!joinPendingByProject[project.id]}
               joinError={joinErrorByProject[project.id] ?? null}
-              needsHelp={project.needs_help}
+              isRecruiting={project.is_recruiting}
               onVote={async () => {
                 const projectId = project.id
                 const currentVoted = localVotes[projectId]?.hasVoted ?? hasVotedMap[projectId] ?? false

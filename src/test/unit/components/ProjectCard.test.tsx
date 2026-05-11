@@ -16,7 +16,7 @@ const baseProps = (): ProjectCardProps => ({
   hasVoted: false,
   hasJoined: false,
   hasRaisedHand: false,
-  needsHelp: false,
+  isRecruiting: false,
   onVote: vi.fn(),
   onJoin: vi.fn(),
   onClick: vi.fn(),
@@ -61,7 +61,7 @@ describe('rendering', () => {
 })
 
 describe('status badge', () => {
-  const statuses: ProjectStatus[] = ['Idea', 'In progress', 'Needs help', 'Paused', 'Shipped']
+  const statuses: ProjectStatus[] = ['Idea', 'In Flight', 'On Hold', 'Complete']
 
   it.each(statuses)('renders status badge for "%s"', (status) => {
     render(<ProjectCard {...baseProps()} status={status} />)
@@ -69,15 +69,15 @@ describe('status badge', () => {
   })
 })
 
-describe('needs help state', () => {
-  it('shows "We need you" CTA when needsHelp is true', () => {
-    render(<ProjectCard {...baseProps()} needsHelp={true} />)
-    expect(screen.getByRole('button', { name: 'We need you' })).toBeInTheDocument()
+describe('recruiting state', () => {
+  it('shows "Recruiting" badge when isRecruiting is true', () => {
+    render(<ProjectCard {...baseProps()} isRecruiting={true} />)
+    expect(screen.getByText('Recruiting')).toBeInTheDocument()
   })
 
-  it('shows default CTA when needsHelp is false', () => {
-    render(<ProjectCard {...baseProps()} needsHelp={false} />)
-    expect(screen.getByRole('button', { name: 'Request to join' })).toBeInTheDocument()
+  it('does not show "Recruiting" badge when isRecruiting is false', () => {
+    render(<ProjectCard {...baseProps()} isRecruiting={false} />)
+    expect(screen.queryByText('Recruiting')).not.toBeInTheDocument()
   })
 })
 
@@ -121,9 +121,9 @@ describe('join button', () => {
     expect(screen.getByRole('button', { name: 'On team' })).toBeInTheDocument()
   })
 
-  it('shows "We need you" when project needs help', () => {
-    render(<ProjectCard {...baseProps()} hasJoined={false} hasRaisedHand={false} needsHelp={true} />)
-    expect(screen.getByRole('button', { name: 'We need you' })).toBeInTheDocument()
+  it('shows "Request to join" when project is recruiting and user has not joined', () => {
+    render(<ProjectCard {...baseProps()} hasJoined={false} hasRaisedHand={false} isRecruiting={true} />)
+    expect(screen.getByRole('button', { name: 'Request to join' })).toBeInTheDocument()
   })
 
   it('shows "Request sent" when the user already raised their hand', () => {

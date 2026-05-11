@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { canEditProjectSettings } from '@/lib/auth/permissions'
-import { notifyNeedsHelp } from '@/lib/notifications/slack'
+import { notifyRecruiting } from '@/lib/notifications/slack'
 import { notifyHubSync } from '@/lib/hub-sync'
 
 export async function POST(
@@ -23,7 +23,7 @@ export async function POST(
 
   const { data: project } = await supabase
     .from('projects')
-    .select('title, needs_help, skills_needed, users!projects_owner_id_fkey(name)')
+    .select('title, is_recruiting, skills_needed, users!projects_owner_id_fkey(name)')
     .eq('id', id)
     .single()
 
@@ -31,11 +31,11 @@ export async function POST(
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const newValue = !project.needs_help
+  const newValue = !project.is_recruiting
 
   const { error } = await supabase
     .from('projects')
-    .update({ needs_help: newValue })
+    .update({ is_recruiting: newValue })
     .eq('id', id)
 
   if (error) {
@@ -50,11 +50,11 @@ export async function POST(
       ? (ownerRecord[0]?.name ?? 'Unknown')
       : (ownerRecord?.name ?? 'Unknown')
 
-    notifyNeedsHelp(project.title, ownerName, project.skills_needed ?? []).catch((err) =>
+    notifyRecruiting(project.title, ownerName, project.skills_needed ?? []).catch((err) =>
       console.error('Slack notify failed:', err)
     )
   }
 
   notifyHubSync()
-  return NextResponse.json({ needsHelp: newValue })
+  return NextResponse.json({ isRecruiting: newValue })
 }

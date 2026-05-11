@@ -18,7 +18,9 @@ function setup(overrides: Partial<Parameters<typeof ProjectActions>[0]> = {}) {
     initialHasVoted: false,
     initialHasRaisedHand: false,
     initialMembershipRole: null,
+    initialIsRecruiting: false,
     isOwner: false,
+    canRecruit: false,
     ...overrides,
   }
   render(<ProjectActions {...props} />)

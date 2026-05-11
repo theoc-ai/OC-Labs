@@ -30,7 +30,7 @@ export function ProjectCard(props: ProjectCardViewProps) {
     hasRaisedHand,
     joinPending = false,
     joinError = null,
-    needsHelp,
+    isRecruiting,
     onVote,
     onJoin,
     onClick,
@@ -49,9 +49,7 @@ export function ProjectCard(props: ProjectCardViewProps) {
       ? 'Request sent'
       : hasJoined
         ? 'On team'
-        : needsHelp
-          ? 'We need you'
-          : 'Request to join'
+        : 'Request to join'
   const isJoinDisabled = hasJoined || hasRaisedHand || joinPending
 
   return (
@@ -60,12 +58,19 @@ export function ProjectCard(props: ProjectCardViewProps) {
       onClick={onClick}
       className={cn(
         'flex w-full cursor-pointer flex-col rounded-xl border border-zinc-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900',
-        needsHelp && 'ring-2 ring-red-400'
+        isRecruiting && 'ring-2 ring-purple-400'
       )}
     >
       {/* Header row */}
       <div className="flex items-center justify-between">
-        <StatusBadge status={status} />
+        <div className="flex items-center gap-1.5">
+          <StatusBadge status={status} />
+          {isRecruiting && (
+            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+              Recruiting
+            </span>
+          )}
+        </div>
         <span className="max-w-[45%] truncate text-right text-xs text-zinc-500">{brand}</span>
       </div>
 
@@ -155,9 +160,7 @@ export function ProjectCard(props: ProjectCardViewProps) {
                 'rounded-full px-3 py-1 text-xs font-medium transition-colors',
                 isJoinDisabled
                   ? 'cursor-default bg-blue-100 text-blue-700'
-                  : needsHelp
-                    ? 'bg-red-100 text-red-700 hover:bg-red-200 cursor-pointer'
-                    : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 cursor-pointer'
+                  : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 cursor-pointer'
               )}
             >
               {joinButtonLabel}
