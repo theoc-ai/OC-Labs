@@ -212,7 +212,7 @@ export function ProjectForm({ initial, mode, projectId, isPowerUser = false }: P
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6 max-w-3xl">
+    <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6 w-full">
       {serverError && (
         <div className="col-span-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">
           {serverError}
