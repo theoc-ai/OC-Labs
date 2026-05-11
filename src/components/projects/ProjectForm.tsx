@@ -212,15 +212,15 @@ export function ProjectForm({ initial, mode, projectId, isPowerUser = false }: P
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+    <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6 max-w-3xl">
       {serverError && (
-        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">
+        <div className="col-span-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">
           {serverError}
         </div>
       )}
 
-      {/* Title */}
-      <div>
+      {/* Title — full width */}
+      <div className="col-span-2">
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
           Title <span className="text-red-500">*</span>
         </label>
@@ -233,8 +233,8 @@ export function ProjectForm({ initial, mode, projectId, isPowerUser = false }: P
         {errors.title && <p className="mt-1 text-xs text-red-600">{errors.title}</p>}
       </div>
 
-      {/* Summary */}
-      <div>
+      {/* Summary — full width */}
+      <div className="col-span-2">
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
           Summary
         </label>
@@ -246,9 +246,9 @@ export function ProjectForm({ initial, mode, projectId, isPowerUser = false }: P
         />
       </div>
 
-      {/* Status */}
+      {/* Status | Stream */}
       {showStatusPicker ? (
-        <div>
+        <div className={!isPowerUser ? 'col-span-2' : undefined}>
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
             Status
           </label>
@@ -263,13 +263,64 @@ export function ProjectForm({ initial, mode, projectId, isPowerUser = false }: P
           </select>
         </div>
       ) : (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
+        <div className="col-span-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
           Submissions start as <span className="font-medium">Idea</span> and stay private until a power user approves them.
         </div>
       )}
 
-      {/* Skills needed */}
-      <div>
+      {isPowerUser && (
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+            Stream
+          </label>
+          <select
+            value={hubStream}
+            onChange={(e) => setHubStream(e.target.value)}
+            className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+          >
+            {HUB_STREAMS.map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Category | Priority — power users only */}
+      {isPowerUser && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              Category
+            </label>
+            <input
+              type="text"
+              value={hubCategory}
+              onChange={(e) => setHubCategory(e.target.value)}
+              maxLength={80}
+              placeholder="e.g. Discovery, Internal Tooling"
+              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              Priority
+            </label>
+            <select
+              value={hubPriority}
+              onChange={(e) => setHubPriority(e.target.value)}
+              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            >
+              {HUB_PRIORITIES.map((p) => (
+                <option key={p.value} value={p.value}>{p.label}</option>
+              ))}
+            </select>
+          </div>
+        </>
+      )}
+
+      {/* Skills needed | Tags */}
+      <div className={`self-start${!isPowerUser ? ' col-span-2' : ''}`}>
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
           Skills needed
         </label>
@@ -312,8 +363,64 @@ export function ProjectForm({ initial, mode, projectId, isPowerUser = false }: P
         )}
       </div>
 
-      {/* GitHub repos */}
-      <div>
+      {isPowerUser && (
+        <div className="self-start">
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+            Tags
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={hubTagInput}
+              onChange={(e) => setHubTagInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  const newTags = hubTagInput.split(',').map((t) => t.trim()).filter(Boolean)
+                  setHubTags((prev) => [...new Set([...prev, ...newTags])])
+                  setHubTagInput('')
+                }
+              }}
+              placeholder="e.g. launch, demo (comma-separated)"
+              className="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const newTags = hubTagInput.split(',').map((t) => t.trim()).filter(Boolean)
+                setHubTags((prev) => [...new Set([...prev, ...newTags])])
+                setHubTagInput('')
+              }}
+              className="rounded-lg bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
+            >
+              Add
+            </button>
+          </div>
+          {hubTags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {hubTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => setHubTags((prev) => prev.filter((t) => t !== tag))}
+                    className="text-zinc-400 hover:text-zinc-700"
+                    aria-label={`Remove tag ${tag}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* GitHub repositories | Contributing brands */}
+      <div className={`self-start${!isPowerUser ? ' col-span-2' : ''}`}>
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
           GitHub repositories
         </label>
@@ -354,8 +461,33 @@ export function ProjectForm({ initial, mode, projectId, isPowerUser = false }: P
         )}
       </div>
 
-      {/* Notion URL */}
-      <div>
+      {isPowerUser && (
+        <div className="self-start">
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+            Contributing brands
+          </label>
+          <div className="space-y-1.5">
+            {OPCOS.map((opco) => (
+              <label key={opco.id} className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                <input
+                  type="checkbox"
+                  checked={hubOpcos.includes(opco.id)}
+                  onChange={(e) => {
+                    setHubOpcos(e.target.checked
+                      ? [...hubOpcos, opco.id]
+                      : hubOpcos.filter((id) => id !== opco.id))
+                  }}
+                  className="rounded border-zinc-300 dark:border-zinc-600"
+                />
+                {opco.label}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Notion URL — full width */}
+      <div className="col-span-2">
         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
           Notion URL
         </label>
@@ -369,142 +501,7 @@ export function ProjectForm({ initial, mode, projectId, isPowerUser = false }: P
         {errors.notion_url && <p className="mt-1 text-xs text-red-600">{errors.notion_url}</p>}
       </div>
 
-      {/* Omnia Hub display — power users only */}
-      {isPowerUser && (
-        <div className="rounded-lg border border-zinc-200 bg-zinc-50/60 p-4 space-y-4 dark:border-zinc-700 dark:bg-zinc-900/40">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              Omnia Hub display
-            </p>
-            <p className="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">
-              These fields control how this project appears on the Omnia Hub AI Projects page.
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-              Stream
-            </label>
-            <select
-              value={hubStream}
-              onChange={(e) => setHubStream(e.target.value)}
-              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-            >
-              {HUB_STREAMS.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-              Category
-            </label>
-            <input
-              type="text"
-              value={hubCategory}
-              onChange={(e) => setHubCategory(e.target.value)}
-              maxLength={80}
-              placeholder='e.g. Discovery, Internal Tooling'
-              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-              Priority
-            </label>
-            <select
-              value={hubPriority}
-              onChange={(e) => setHubPriority(e.target.value)}
-              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-            >
-              {HUB_PRIORITIES.map((p) => (
-                <option key={p.value} value={p.value}>{p.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-              Contributing OpCos
-            </label>
-            <div className="space-y-1.5">
-              {OPCOS.map((opco) => (
-                <label key={opco.id} className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-                  <input
-                    type="checkbox"
-                    checked={hubOpcos.includes(opco.id)}
-                    onChange={(e) => {
-                      setHubOpcos(e.target.checked
-                        ? [...hubOpcos, opco.id]
-                        : hubOpcos.filter((id) => id !== opco.id))
-                    }}
-                    className="rounded border-zinc-300 dark:border-zinc-600"
-                  />
-                  {opco.label}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-              Tags
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={hubTagInput}
-                onChange={(e) => setHubTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    const newTags = hubTagInput.split(',').map((t) => t.trim()).filter(Boolean)
-                    setHubTags((prev) => [...new Set([...prev, ...newTags])])
-                    setHubTagInput('')
-                  }
-                }}
-                placeholder="e.g. launch, demo (comma-separated)"
-                className="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  const newTags = hubTagInput.split(',').map((t) => t.trim()).filter(Boolean)
-                  setHubTags((prev) => [...new Set([...prev, ...newTags])])
-                  setHubTagInput('')
-                }}
-                className="rounded-lg bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
-              >
-                Add
-              </button>
-            </div>
-            {hubTags.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {hubTags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => setHubTags((prev) => prev.filter((t) => t !== tag))}
-                      className="text-zinc-400 hover:text-zinc-700"
-                      aria-label={`Remove tag ${tag}`}
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className="flex gap-3 pt-2">
+      <div className="col-span-2 flex gap-3 pt-2">
         <button
           type="submit"
           disabled={submitting || deleting}
@@ -522,7 +519,7 @@ export function ProjectForm({ initial, mode, projectId, isPowerUser = false }: P
       </div>
 
       {mode === 'edit' && projectId && (
-        <section className="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-900/50 dark:bg-red-950/30">
+        <section className="col-span-2 rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-900/50 dark:bg-red-950/30">
           <h2 className="text-sm font-semibold text-red-700 dark:text-red-300">Danger zone</h2>
           <p className="mt-1 text-xs text-red-700/90 dark:text-red-300/90">
             Delete this project permanently. Type <strong>DELETE</strong> or the exact project name and press Enter.
