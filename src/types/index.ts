@@ -58,8 +58,11 @@ export interface Project {
   vote_count: number
   notion_url?: string
   jira_epic_key?: string
-  hub_stream?: string
-  hub_category?: string
+  stream?: string
+  category?: string
+  priority?: string
+  contributing_opcos?: string[]
+  tags?: string[]
   created_at: string
   updated_at: string
 }
