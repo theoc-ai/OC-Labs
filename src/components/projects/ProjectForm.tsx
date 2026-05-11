@@ -6,6 +6,12 @@ import type { Project, ProjectStatus } from '@/types'
 
 const ALL_STATUSES: ProjectStatus[] = ['Idea', 'In progress', 'Needs help', 'Paused', 'Shipped']
 
+const HUB_STREAMS = [
+  { value: 'internal_rnd',        label: 'Internal R&D' },
+  { value: 'client_work',         label: 'Client Work' },
+  { value: 'licensable_solution', label: 'Licensable Solution' },
+]
+
 interface ProjectFormProps {
   initial?: Partial<Project>
   mode: 'create' | 'edit'
@@ -40,6 +46,8 @@ export function ProjectForm({ initial, mode, projectId, isPowerUser = false }: P
   const [summary, setSummary] = useState(initial?.summary ?? '')
   const [status, setStatus] = useState<ProjectStatus>(initial?.status ?? 'Idea')
   const [notionUrl, setNotionUrl] = useState(initial?.notion_url ?? '')
+  const [hubStream, setHubStream] = useState(initial?.hub_stream ?? 'internal_rnd')
+  const [hubCategory, setHubCategory] = useState(initial?.hub_category ?? '')
   const [skillInput, setSkillInput] = useState('')
   const [skills, setSkills] = useState<string[]>(initial?.skills_needed ?? [])
   const [repoInput, setRepoInput] = useState('')
@@ -106,6 +114,10 @@ export function ProjectForm({ initial, mode, projectId, isPowerUser = false }: P
       notion_url: notionUrl.trim() || undefined,
       skills_needed: skills,
       github_repos: repos,
+      ...(isPowerUser && {
+        hub_stream: hubStream,
+        hub_category: hubCategory.trim() || undefined,
+      }),
     }
 
     try {
@@ -329,6 +341,43 @@ export function ProjectForm({ initial, mode, projectId, isPowerUser = false }: P
         />
         {errors.notion_url && <p className="mt-1 text-xs text-red-600">{errors.notion_url}</p>}
       </div>
+
+      {/* Omnia Hub classification — power users only */}
+      {isPowerUser && (
+        <div className="rounded-lg border border-zinc-200 bg-zinc-50/60 p-4 space-y-4 dark:border-zinc-700 dark:bg-zinc-900/40">
+          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Omnia Hub display
+          </p>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              Stream
+            </label>
+            <select
+              value={hubStream}
+              onChange={(e) => setHubStream(e.target.value)}
+              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            >
+              {HUB_STREAMS.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+              Category
+            </label>
+            <input
+              type="text"
+              value={hubCategory}
+              onChange={(e) => setHubCategory(e.target.value)}
+              placeholder="e.g. Marketing Collateral, AI Capability, Internal Tool"
+              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            />
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-3 pt-2">
         <button
