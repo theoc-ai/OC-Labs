@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { canEditProjectSettings } from '@/lib/auth/permissions'
 import { notifyNeedsHelp } from '@/lib/notifications/slack'
+import { notifyHubSync } from '@/lib/hub-sync'
 
 export async function POST(
   _req: NextRequest,
@@ -54,5 +55,6 @@ export async function POST(
     )
   }
 
+  notifyHubSync()
   return NextResponse.json({ needsHelp: newValue })
 }

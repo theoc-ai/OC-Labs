@@ -20,6 +20,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       status,
       brand,
       skills_needed,
+      hub_stream,
+      hub_category,
       created_at,
       updated_at,
       owner:users!owner_id (

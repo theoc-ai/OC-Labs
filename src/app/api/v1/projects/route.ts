@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { notifyNewProject } from '@/lib/notifications/slack-events'
 import { createEpic } from '@/lib/jira/client'
 import { canCreateProject, getPlatformRole, isPowerUser } from '@/lib/auth/permissions'
+import { notifyHubSync } from '@/lib/hub-sync'
 import type { ProjectStatus } from '@/types'
 
 const VALID_STATUSES: ProjectStatus[] = ['Idea', 'In progress', 'Needs help', 'Paused', 'Shipped']
@@ -81,6 +82,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     .single()
 
   if (submissionStatus === 'approved') {
+    // Notify Hub sync — fire and forget
+    notifyHubSync()
+
     // Notify Slack — fire and forget
     notifyNewProject(
       project.id,
