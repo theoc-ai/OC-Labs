@@ -138,9 +138,17 @@ export async function POST(
 }
 
 /**
- * Extract the Supabase auth token value from the cookie header.
- * Supabase SSR may chunk large JWTs across multiple cookies with a `.N` suffix
- * (e.g. sb-xxx-auth-token.0, sb-xxx-auth-token.1). Reassemble them in order.
+ * Extract the Supabase session cookie value from the cookie header so the agent
+ * can forward it verbatim to OC Labs API routes.
+ *
+ * Supabase SSR stores the session as a base64-prefixed or URL-encoded JSON value
+ * that may be chunked across multiple cookies (sb-xxx-auth-token.0, .1, ...).
+ * We reassemble the full value and send it as-is — Supabase SSR can then parse
+ * it correctly on the receiving route, reconstructing a valid session with
+ * access_token, refresh_token, and expires_at.
+ *
+ * Sending only the raw JWT (the old approach) caused _isValidSession to fail
+ * because it expects a full session object, not a bare token string.
  */
 function extractAuthToken(cookieHeader: string): string {
   const cookies = cookieHeader
@@ -157,13 +165,13 @@ function extractAuthToken(cookieHeader: string): string {
       return numA - numB
     })
   if (chunked.length > 0) {
-    const raw = chunked.map((c) => c.split('=').slice(1).join('=')).join('')
-    return extractSupabaseAccessToken(raw)
+    // Return the full reassembled session value — @supabase/ssr can decode it.
+    return chunked.map((c) => c.split('=').slice(1).join('=')).join('')
   }
 
   // Single cookie: sb-xxx-auth-token=...
   const single = cookies.find((c) => c.includes('-auth-token='))
-  return single ? extractSupabaseAccessToken(single.split('=').slice(1).join('=')) : ''
+  return single ? single.split('=').slice(1).join('=') : ''
 }
 
 function normalizeAndTrimHistory(input: unknown): Array<{ role: 'user' | 'assistant'; content: string }> {
@@ -228,68 +236,3 @@ function normalizeAgentURL(raw: string): string {
   return value
 }
 
-function extractSupabaseAccessToken(rawValue: string): string {
-  const direct = rawValue.trim().replace(/^"|"$/g, '')
-  if (looksLikeJwt(direct)) return direct
-
-  const decoded = safelyDecodeURIComponent(direct)
-  if (looksLikeJwt(decoded)) return decoded
-
-  for (const candidate of [direct, decoded]) {
-    const fromJson = parseSessionCandidate(candidate)
-    if (fromJson) return fromJson
-  }
-
-  return decoded || direct
-}
-
-function parseSessionCandidate(value: string): string {
-  const normalized = value.trim().replace(/^"|"$/g, '')
-  const maybeBase64 = normalized.startsWith('base64-')
-    ? decodeBase64Url(normalized.slice('base64-'.length))
-    : normalized
-
-  try {
-    const parsed = JSON.parse(maybeBase64) as unknown
-
-    if (Array.isArray(parsed) && typeof parsed[0] === 'string' && looksLikeJwt(parsed[0])) {
-      return parsed[0]
-    }
-
-    if (
-      parsed &&
-      typeof parsed === 'object' &&
-      'access_token' in parsed &&
-      typeof (parsed as { access_token?: unknown }).access_token === 'string'
-    ) {
-      const token = (parsed as { access_token: string }).access_token
-      if (looksLikeJwt(token)) return token
-    }
-  } catch {
-    return ''
-  }
-
-  return ''
-}
-
-function looksLikeJwt(value: string): boolean {
-  return /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(value)
-}
-
-function safelyDecodeURIComponent(value: string): string {
-  try {
-    return decodeURIComponent(value)
-  } catch {
-    return value
-  }
-}
-
-function decodeBase64Url(value: string): string {
-  try {
-    const base64 = value.replace(/-/g, '+').replace(/_/g, '/')
-    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=')
-    return atob(padded)
-  } catch {
-    return value
-  }
-}
