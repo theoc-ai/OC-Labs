@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
 import { cn } from '@/lib/utils/cn'
 import {
@@ -33,6 +34,7 @@ interface ProjectChatProps {
 }
 
 export function ProjectChat({ projectId, initialMessages, onMessagesChange }: ProjectChatProps) {
+  const router = useRouter()
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
 
   useEffect(() => {
@@ -137,6 +139,10 @@ export function ProjectChat({ projectId, initialMessages, onMessagesChange }: Pr
           prev.map((m) => (m.id === assistantId ? { ...m, content: snap } : m))
         )
       }
+
+      // Refresh server component data so any agent writes (update_project,
+      // post_update, create_tasks, etc.) are reflected immediately.
+      router.refresh()
     } catch (err) {
       const fallback =
         err instanceof Error && err.message
