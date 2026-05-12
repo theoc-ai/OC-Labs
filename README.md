@@ -41,6 +41,12 @@ supabase/
   seed.sql           Launch data (7 projects, 8 users)
 ```
 
+## Agent
+
+The project assistant is a separate Go service in [`agent/`](agent/README.md). See that README for scope, guardrails, tools, and deployment instructions.
+
+---
+
 ## Branches
 
 | Branch | Purpose |
