@@ -16,13 +16,21 @@ const maxToolIterations = 6
 const (
 	defaultGeneralModel  = "claude-sonnet-4-6"
 	defaultRepoReadModel = "claude-sonnet-4-5"
+	defaultConfirmModel  = "claude-haiku-4-5-20251001"
 )
+
+type modelRoute struct {
+	model     string
+	maxTokens int64
+	reason    string
+}
 
 type Agent struct {
 	client        *anthropic.Client
 	tools         []ToolDefinition
 	generalModel  string
 	repoReadModel string
+	confirmModel  string
 }
 
 func NewAgent(client *anthropic.Client, tools []ToolDefinition) *Agent {
@@ -31,6 +39,7 @@ func NewAgent(client *anthropic.Client, tools []ToolDefinition) *Agent {
 		tools:         tools,
 		generalModel:  firstNonEmpty(strings.TrimSpace(os.Getenv("AGENT_MODEL_GENERAL")), defaultGeneralModel),
 		repoReadModel: firstNonEmpty(strings.TrimSpace(os.Getenv("AGENT_MODEL_REPO_READ")), defaultRepoReadModel),
+		confirmModel:  firstNonEmpty(strings.TrimSpace(os.Getenv("AGENT_MODEL_CONFIRM")), defaultConfirmModel),
 	}
 }
 
@@ -44,17 +53,17 @@ func (a *Agent) Run(
 	messages []anthropic.MessageParam,
 	w io.Writer,
 ) (string, error) {
-	model, routeReason := a.selectModel(userMessage)
-	log.Printf("agent model route=%s model=%s", routeReason, model)
+	route := a.selectModel(userMessage)
+	log.Printf("agent model route=%s model=%s", route.reason, route.model)
 
-	output, err := a.runWithModel(ctx, toolCtx, system, messages, model, w)
+	output, err := a.runWithModel(ctx, toolCtx, system, messages, route.model, route.maxTokens, w)
 	if err == nil {
 		return output, nil
 	}
 
-	if model != a.generalModel && isModelSelectionError(err) {
+	if route.model != a.generalModel && isModelSelectionError(err) {
 		log.Printf("agent model fallback model=%s reason=%v", a.generalModel, err)
-		return a.runWithModel(ctx, toolCtx, system, messages, a.generalModel, w)
+		return a.runWithModel(ctx, toolCtx, system, messages, a.generalModel, 1536, w)
 	}
 
 	return "", err
@@ -66,6 +75,7 @@ func (a *Agent) runWithModel(
 	system string,
 	messages []anthropic.MessageParam,
 	model string,
+	maxTokens int64,
 	w io.Writer,
 ) (string, error) {
 	// Build tool params
@@ -83,7 +93,7 @@ func (a *Agent) runWithModel(
 	for range maxToolIterations {
 		message, err := a.client.Messages.New(ctx, anthropic.MessageNewParams{
 			Model:     model,
-			MaxTokens: 1536,
+			MaxTokens: maxTokens,
 			System:    []anthropic.TextBlockParam{{Text: system}},
 			Messages:  messages,
 			Tools:     anthropicTools,
@@ -127,17 +137,40 @@ func (a *Agent) runWithModel(
 	return "", fmt.Errorf("agent exceeded %d tool iterations", maxToolIterations)
 }
 
-func (a *Agent) selectModel(userMessage string) (model string, reason string) {
+func (a *Agent) selectModel(userMessage string) modelRoute {
 	message := strings.ToLower(strings.TrimSpace(userMessage))
 	if message == "" {
-		return a.generalModel, "default"
+		return modelRoute{a.generalModel, 1536, "default"}
+	}
+
+	if looksLikeConfirmIntent(message) {
+		return modelRoute{a.confirmModel, 512, "confirm"}
 	}
 
 	if looksLikeRepoReadIntent(message) {
-		return a.repoReadModel, "repo_read"
+		return modelRoute{a.repoReadModel, 1536, "repo_read"}
 	}
 
-	return a.generalModel, "default"
+	return modelRoute{a.generalModel, 1536, "default"}
+}
+
+func looksLikeConfirmIntent(message string) bool {
+	if len(message) > 60 {
+		return false
+	}
+	confirmPhrases := []string{
+		"yes", "yep", "yeah", "yup", "sure", "ok", "okay",
+		"approve", "approved", "confirm", "confirmed",
+		"go ahead", "proceed", "do it", "sounds good",
+		"looks good", "correct", "right", "go for it",
+		"make it so", "do that", "ship it",
+	}
+	for _, phrase := range confirmPhrases {
+		if strings.Contains(message, phrase) {
+			return true
+		}
+	}
+	return false
 }
 
 func looksLikeRepoReadIntent(message string) bool {
