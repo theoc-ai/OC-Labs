@@ -1,10 +1,9 @@
 # OC Labs
 
-Internal project discovery and collaboration board for the Omnia Collective.
+Internal project discovery and collaboration board for the Omnia Collective. Members log in via SSO, browse and vote on projects, raise their hand to join, and post milestone updates.
 
-**Stack:** Next.js · TypeScript · Supabase · Tailwind CSS
-**Deployment:** Vercel → [oclabs.space](https://oclabs.space)
-**Handover doc:** [Full Build Handover (oclabs_handover.docx)](https://github.com/williamlobb/OC-Labs)
+**Live:** [oclabs.space](https://oclabs.space)  
+**Stack:** Next.js 16 · React 19 · TypeScript · Tailwind CSS v4 · Supabase · Vercel
 
 ---
 
@@ -12,11 +11,14 @@ Internal project discovery and collaboration board for the Omnia Collective.
 
 ```bash
 cp .env.local.example .env.local
-# Fill in credentials (Supabase, Slack, Resend, CoWork, GitHub)
+# Fill in credentials — see .env.local.example for all required vars
 
 npm install
 npm run dev
+# → http://localhost:3000
 ```
+
+---
 
 ## Project structure
 
@@ -34,40 +36,62 @@ src/
     supabase/        client, server, admin, middleware
     github/          Repo metadata fetcher
     notifications/   Slack webhook, email digest
-    cowork/          LinkedIn/CoWork sync client
+    cowork/          Identity sync client
   types/             TypeScript interfaces
 supabase/
   migrations/        SQL migration files
-  seed.sql           Launch data (7 projects, 8 users)
+agent/               Go-based AI project assistant (see below)
 ```
-
-## Agent
-
-The project assistant is a separate Go service in [`agent/`](agent/README.md). See that README for scope, guardrails, tools, and deployment instructions.
 
 ---
 
-## Branches
+## Project agent
 
-| Branch | Purpose |
-|--------|---------|
-| `main` | Production — protected, requires PR + review |
-| `develop` | Integration branch |
-| `phase/1-mvp` | Phase 1 feature work (Claude Code) |
+Every project has an AI assistant built on Claude. It lives in [`agent/`](agent/README.md) — a lightweight Go service deployed on Fly.io, called by the app on each chat turn.
 
-## Phase 1 PRs
+### What it can do
 
-Claude Code implements these in order:
+| | Contributors | Owners |
+|---|---|---|
+| Read project context & tasks | ✓ | ✓ |
+| Browse linked GitHub repos | ✓ | ✓ |
+| Edit project fields (title, summary, status, skills) | — | ✓ |
+| Create / update / delete tasks | — | ✓ |
+| Post activity feed updates | — | ✓ |
+| Add context blocks | — | ✓ |
 
-| PR | Feature |
-|----|---------|
-| PR-01 | Auth — SSO login + user session |
-| PR-02 | Project card component |
-| PR-03 | Board view — list + filter + search |
-| PR-04 | Raise hand mechanic |
-| PR-05 | Vote mechanic |
-| PR-06 | Profile card component |
-| PR-07 | My profile view |
-| PR-08 | GitHub repo link + README preview |
-| PR-09 | Project registration form |
-| PR-10 | Needs-help flag + Slack notification |
+### How to use it
+
+Open any project and click the chat icon. Ask it anything about the project — it can read your linked repos, answer questions about the codebase, break work into tasks, and post updates.
+
+**Tips:**
+- Ask it to decompose a goal into tasks — it will propose a plan and wait for your confirmation before creating anything
+- Link a GitHub repo to the project first if you want it to read code
+- Keep requests focused — one repo or folder at a time is faster and more accurate
+
+### Guardrails
+
+- **Project-scoped** — cannot read or write data from other projects
+- **Auth-bound** — all writes use your own session token, no privilege escalation
+- **No fabrication** — will say "I don't know" rather than invent answers
+- **52-second hard timeout** per turn
+- **Max 6 tool calls** per turn to prevent runaway loops
+- **Confirms before bulk actions** — task creation and multi-step plans require your explicit go-ahead
+
+---
+
+## Key environment variables
+
+| Variable | Required | Used for |
+|----------|----------|----------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | All Supabase clients |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Browser + server clients |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Admin operations (server only) |
+| `ANTHROPIC_API_KEY` | Yes | Project agent (Next.js app) |
+| `RESEND_API_KEY` | Yes | Email digest |
+| `CRON_SECRET` | Yes | Secures the digest cron endpoint |
+| `GITHUB_TOKEN` | No | Raises GitHub API rate limit to 5000 req/hr |
+| `SLACK_WEBHOOK_PROJECTS` | No | Project creation / join notifications |
+| `SLACK_WEBHOOK_WINS` | No | Milestone update notifications |
+
+Full list with descriptions in `.env.local.example`.
